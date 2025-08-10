@@ -58,6 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Error Handling**: Comprehensive error handling with automatic recovery
 - **Status Monitoring**: Real-time device status monitoring with configurable intervals
 
+## [1.1.1] - 2025-08-11
+
 ## [Unreleased]
 
 ### Added
