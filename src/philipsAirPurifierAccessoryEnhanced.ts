@@ -52,6 +52,21 @@ type PythonScriptResult = {
   success?: boolean;
 };
 
+// Combined status type for both enhanced and standard polling
+type DeviceStatus = {
+  pwr?: number;
+  mode?: string;
+  om?: number | string;
+  pm25?: number;
+  fltsts0?: number;
+  fltsts1?: number;
+  temp?: number;
+  rh?: number;
+  iaql?: number;
+  error?: string;
+  success?: boolean;
+};
+
 export class PhilipsAirPurifierAccessoryEnhanced {
   private service: Service;
   private fanService?: Service;
@@ -316,7 +331,7 @@ export class PhilipsAirPurifierAccessoryEnhanced {
     try {
       this.platform.log.debug(`Polling device status for ${this.deviceConfig.name}...`);
 
-      let status: any;
+      let status: DeviceStatus;
 
       if (this.useEnhancedPolling) {
         // Use enhanced polling interface
@@ -493,7 +508,7 @@ export class PhilipsAirPurifierAccessoryEnhanced {
     try {
       this.platform.log.debug(`Getting Active characteristic for ${this.deviceConfig.name}`);
 
-      let status: any;
+      let status: DeviceStatus;
 
       if (this.useEnhancedPolling) {
         const result = await this.runEnhancedPythonScript('status', [
@@ -523,7 +538,7 @@ export class PhilipsAirPurifierAccessoryEnhanced {
 
   async getCurrentAirPurifierState(): Promise<CharacteristicValue> {
     try {
-      let status: any;
+      let status: DeviceStatus;
 
       if (this.useEnhancedPolling) {
         const result = await this.runEnhancedPythonScript('status', [
@@ -591,7 +606,7 @@ export class PhilipsAirPurifierAccessoryEnhanced {
 
   async getTargetAirPurifierState(): Promise<CharacteristicValue> {
     try {
-      let status: any;
+      let status: DeviceStatus;
 
       if (this.useEnhancedPolling) {
         const result = await this.runEnhancedPythonScript('status', [
@@ -653,7 +668,7 @@ export class PhilipsAirPurifierAccessoryEnhanced {
 
   async getRotationSpeed(): Promise<CharacteristicValue> {
     try {
-      let status: any;
+      let status: DeviceStatus;
 
       if (this.useEnhancedPolling) {
         const result = await this.runEnhancedPythonScript('status', [
@@ -684,7 +699,7 @@ export class PhilipsAirPurifierAccessoryEnhanced {
 
   async getCurrentTemperature(): Promise<CharacteristicValue> {
     try {
-      let status: any;
+      let status: DeviceStatus;
 
       if (this.useEnhancedPolling) {
         const result = await this.runEnhancedPythonScript('status', [
@@ -712,7 +727,7 @@ export class PhilipsAirPurifierAccessoryEnhanced {
 
   async getCurrentHumidity(): Promise<CharacteristicValue> {
     try {
-      let status: any;
+      let status: DeviceStatus;
 
       if (this.useEnhancedPolling) {
         const result = await this.runEnhancedPythonScript('status', [
@@ -740,7 +755,7 @@ export class PhilipsAirPurifierAccessoryEnhanced {
 
   async getPM25Density(): Promise<CharacteristicValue> {
     try {
-      let status: any;
+      let status: DeviceStatus;
 
       if (this.useEnhancedPolling) {
         const result = await this.runEnhancedPythonScript('status', [
@@ -768,7 +783,7 @@ export class PhilipsAirPurifierAccessoryEnhanced {
 
   async getFilterLifeLevel(): Promise<CharacteristicValue> {
     try {
-      let status: any;
+      let status: DeviceStatus;
 
       if (this.useEnhancedPolling) {
         const result = await this.runEnhancedPythonScript('status', [
@@ -799,7 +814,7 @@ export class PhilipsAirPurifierAccessoryEnhanced {
 
   async getFilterChangeIndication(): Promise<CharacteristicValue> {
     try {
-      let status: any;
+      let status: DeviceStatus;
 
       if (this.useEnhancedPolling) {
         const result = await this.runEnhancedPythonScript('status', [
