@@ -1,6 +1,6 @@
 # Homebridge Philips Air Purifier Plugin
 
-A Homebridge plugin that allows you to control Philips Air Purifiers using the py-air-control Python module. This plugin integrates your Philips Air Purifier with Apple HomeKit, enabling you to control it through the Home app, Siri, and HomeKit automations.
+A Homebridge plugin that allows you to control Philips Air Purifiers using the aioairctrl Python module. This plugin integrates your Philips Air Purifier with Apple HomeKit, enabling you to control it through the Home app, Siri, and HomeKit automations.
 
 ## Features
 
@@ -60,7 +60,7 @@ npm install -g homebridge-philips-air-purifier-pyaircontrol
 During installation, the plugin automatically:
 
 1. Creates a Python virtual environment in the plugin directory
-2. Installs required Python dependencies (`py-air-control`, `aiocoap`, `requests`)
+2. Installs required Python dependencies (`aioairctrl`, `aiocoap`, `requests`)
 3. Provides the path to the Python executable for configuration
 
 **Important**: After installation, the plugin will display the path to the Python executable. Use this path as the `pythonVenvPath` in your configuration.
@@ -94,7 +94,7 @@ The `pythonVenvPath` parameter should point to the Python executable within the 
 
 ## Supported Devices
 
-This plugin is designed to work with Philips Air Purifiers that are compatible with the py-air-control module, including:
+This plugin is designed to work with Philips Air Purifiers that are compatible with the aioairctrl module, including:
 
 - Philips Series 2000
 - Philips Series 3000
@@ -207,7 +207,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Acknowledgments
 
-- [py-air-control](https://github.com/rgerganov/py-air-control) - Python library for controlling Philips Air Purifiers
+- [aioairctrl](https://github.com/rgerganov/aioairctrl) - Async Python library for controlling Philips Air Purifiers
 - [Homebridge](https://homebridge.io/) - HomeKit bridge for non-HomeKit devices
 
 ## Support

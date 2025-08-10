@@ -2,19 +2,20 @@
 
 import sys
 import json
-from pyairctrl import coap_client, http_client
+import asyncio
+from aioairctrl import CoAPAirClient, HTTPAirClient
 
-def get_client(ip, protocol):
+async def get_client(ip, protocol):
     if protocol == "coap":
-        return coap_client.CoAPAirClient(ip)
+        return CoAPAirClient(ip)
     elif protocol == "coaps":
-        return coap_client.CoAPAirClient(ip, True) # encrypted CoAP
+        return CoAPAirClient(ip, use_encryption=True)  # encrypted CoAP
     elif protocol == "http":
-        return http_client.HTTPAirClient(ip)
+        return HTTPAirClient(ip)
     else:
         raise ValueError(f"Unsupported protocol: {protocol}")
 
-if __name__ == "__main__":
+async def main():
     if len(sys.argv) < 3:
         print(json.dumps({"error": "Usage: get_status.py <ip> <protocol>"}))
         sys.exit(1)
@@ -23,9 +24,12 @@ if __name__ == "__main__":
     protocol = sys.argv[2]
 
     try:
-        client = get_client(ip, protocol)
-        status = client.get_status()
+        client = await get_client(ip, protocol)
+        status = await client.get_status()
         print(json.dumps(status))
     except Exception as e:
         print(json.dumps({"error": str(e)}))
         sys.exit(1)
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -2,19 +2,20 @@
 
 import sys
 import json
-from pyairctrl import coap_client, http_client
+import asyncio
+from aioairctrl import CoAPAirClient, HTTPAirClient
 
-def get_client(ip, protocol):
+async def get_client(ip, protocol):
     if protocol == "coap":
-        return coap_client.CoAPAirClient(ip)
+        return CoAPAirClient(ip)
     elif protocol == "coaps":
-        return coap_client.CoAPAirClient(ip, True) # encrypted CoAP
+        return CoAPAirClient(ip, use_encryption=True)  # encrypted CoAP
     elif protocol == "http":
-        return http_client.HTTPAirClient(ip)
+        return HTTPAirClient(ip)
     else:
         raise ValueError(f"Unsupported protocol: {protocol}")
 
-if __name__ == "__main__":
+async def main():
     if len(sys.argv) < 5:
         print(json.dumps({"error": "Usage: set_value.py <ip> <protocol> <key> <value>"}))
         sys.exit(1)
@@ -35,12 +36,15 @@ if __name__ == "__main__":
         else:
             value = value_str
     except ValueError:
-        value = value_str # Fallback to string if conversion fails
+        value = value_str  # Fallback to string if conversion fails
 
     try:
-        client = get_client(ip, protocol)
-        client.set_values({key: value})
+        client = await get_client(ip, protocol)
+        await client.set_values({key: value})
         print(json.dumps({"success": True}))
     except Exception as e:
         print(json.dumps({"error": str(e)}))
         sys.exit(1)
+
+if __name__ == "__main__":
+    asyncio.run(main())

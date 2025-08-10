@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolves error: "module 'pyairctrl.coap_client' has no attribute 'CoAPClient'"
 - Plugin now works with current versions of py-air-control library
 
+### Changed
+- **Python Library Migration**: Replaced `py-air-control` with `aioairctrl` for better async performance
+- Updated Python scripts to use async/await syntax for improved reliability
+- Enhanced CoAP client initialization with proper encryption support
+- Better error handling and resource management in Python scripts
+
 ### Added
 - **Performance & Reliability Improvements**: Added comprehensive timeout and retry mechanisms
 - Script execution timeout (configurable, default 30 seconds) to prevent Homebridge hanging
