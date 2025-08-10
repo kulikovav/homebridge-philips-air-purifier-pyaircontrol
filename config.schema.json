@@ -1,0 +1,49 @@
+{
+  "pluginAlias": "PhilipsAirPurifierPyAirControl",
+  "pluginType": "platform",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "devices": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "required": true,
+              "description": "Name of the Air Purifier (e.g., 'Living Room Air Purifier')"
+            },
+            "ip": {
+              "type": "string",
+              "format": "ipv4",
+              "required": true,
+              "description": "IP address of the Philips Air Purifier"
+            },
+            "protocol": {
+              "type": "string",
+              "required": true,
+              "enum": ["coap", "coaps", "http"],
+              "default": "coaps",
+              "description": "Communication protocol (coap, coaps, or http)"
+            },
+            "pollingInterval": {
+              "type": "number",
+              "required": false,
+              "default": 10,
+              "minimum": 5,
+              "description": "Polling interval in seconds (minimum 5 seconds)"
+            },
+            "pythonVenvPath": {
+              "type": "string",
+              "required": false,
+              "description": "Full path to the Python executable within your virtual environment (e.g., /usr/bin/python3 or /path/to/venv/bin/python)."
+            }
+          },
+          "required": ["name", "ip", "protocol"]
+        }
+      }
+    },
+    "required": ["devices"]
+  }
+}

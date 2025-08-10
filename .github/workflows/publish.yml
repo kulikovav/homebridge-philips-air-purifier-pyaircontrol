@@ -1,0 +1,79 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Build project
+        run: npm run build
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
+            echo "❌ Build output directory is empty or missing"
+            exit 1
+          fi
+          echo "✅ Build output verified"
+
+      - name: Check package contents
+        run: |
+          echo "Package contents to be published:"
+          npm pack --dry-run
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+      - name: Create GitHub release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          body: |
+            ## What's New
+
+            This release includes:
+            - Bug fixes and improvements
+            - Enhanced Python virtual environment support
+            - Better error handling and logging
+
+            ## Installation
+
+            ```bash
+            npm install -g homebridge-philips-air-purifier-pyaircontrol@${{ github.ref_name }}
+            ```
+
+            ## Configuration
+
+            Make sure to update your `pythonVenvPath` in the configuration if needed.
+
+            ## Support
+
+            If you encounter any issues, please check the [troubleshooting guide](https://github.com/${{ github.repository }}/blob/main/README.md#troubleshooting) or create an issue on GitHub.

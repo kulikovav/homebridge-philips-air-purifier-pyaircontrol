@@ -1,0 +1,66 @@
+{
+  "private": false,
+  "name": "homebridge-philips-air-purifier-pyaircontrol",
+  "version": "1.0.1",
+  "description": "Homebridge plugin for Philips Air Purifiers using py-air-control with automatic Python virtual environment setup.",
+  "license": "Apache-2.0",
+  "author": "Your Name <your.email@example.com>",
+  "homepage": "https://github.com/your-username/homebridge-philips-air-purifier-pyaircontrol#readme",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/your-username/homebridge-philips-air-purifier-pyaircontrol.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/homebridge-philips-air-purifier-pyaircontrol/issues"
+  },
+  "engines": {
+    "homebridge": ">=1.6.0",
+    "node": ">=16.0.0"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist/",
+    "python_scripts/",
+    "scripts/",
+    "config.schema.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "homebridge",
+    "homebridge-plugin",
+    "philips",
+    "air purifier",
+    "py-air-control",
+    "homekit",
+    "air quality",
+    "coap",
+    "python"
+  ],
+  "scripts": {
+    "lint": "eslint src/**.ts --max-warnings=0",
+    "watch": "tsc -w",
+    "build": "tsc",
+    "clean": "rm -rf dist/",
+    "prepublishOnly": "npm run lint && npm run build",
+    "postinstall": "node scripts/postinstall.js",
+    "config:help": "node scripts/config-helper.js",
+    "config:update": "node -e \"require('./scripts/config-helper.js').updateConfigWithPythonVenv(require('./scripts/config-helper.js').findHomebridgeConfig())\"",
+    "config:sample": "node -e \"require('./scripts/config-helper.js').createSampleConfig()\"",
+    "publish:patch": "npm version patch && npm publish",
+    "publish:minor": "npm version minor && npm publish",
+    "publish:major": "npm version major && npm publish",
+    "publish:interactive": "node scripts/publish.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^16.18.96",
+    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@typescript-eslint/parser": "^7.8.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5",
+    "homebridge": "^1.8.2"
+  }
+}
