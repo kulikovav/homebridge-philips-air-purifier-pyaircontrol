@@ -38,6 +38,28 @@
               "type": "string",
               "required": false,
               "description": "Full path to the Python executable within your virtual environment (e.g., /usr/bin/python3 or /path/to/venv/bin/python)."
+            },
+            "scriptTimeout": {
+              "type": "number",
+              "required": false,
+              "default": 30000,
+              "minimum": 5000,
+              "maximum": 120000,
+              "description": "Timeout in milliseconds for Python script execution (5-120 seconds, default 30 seconds)"
+            },
+            "maxRetries": {
+              "type": "number",
+              "required": false,
+              "default": 2,
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Maximum number of retries for network-related errors (0-5, default 2)"
+            },
+            "disablePollingOnError": {
+              "type": "boolean",
+              "required": false,
+              "default": false,
+              "description": "Disable polling when device is unreachable after 3 consecutive errors"
             }
           },
           "required": ["name", "ip", "protocol"]

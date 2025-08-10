@@ -10,7 +10,25 @@ interface DeviceConfig {
   protocol?: string;
   pollingInterval?: number;
   pythonVenvPath?: string;
+  scriptTimeout?: number; // Timeout in milliseconds for Python script execution
+  maxRetries?: number; // Maximum number of retries for network-related errors
+  disablePollingOnError?: boolean; // Disable polling when device is unreachable
 }
+
+// Type for Python script results
+type PythonScriptResult = {
+  pwr?: number;
+  mode?: string;
+  om?: number | string;
+  pm25?: number;
+  fltsts0?: number;
+  fltsts1?: number;
+  temp?: number;
+  rh?: number;
+  iaql?: number;
+  error?: string;
+  success?: boolean;
+};
 
 export class PhilipsAirPurifierAccessory {
   private service: Service;
@@ -19,6 +37,8 @@ export class PhilipsAirPurifierAccessory {
   private humiditySensorService?: Service;
 
   private pythonScriptPath: string;
+  private consecutiveErrors: number = 0;
+  private pollingIntervalId?: NodeJS.Timeout;
 
   private getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
@@ -100,33 +120,32 @@ export class PhilipsAirPurifierAccessory {
     this.platform.log.debug(`Python scripts path: ${this.pythonScriptPath}`);
 
     // Poll for status updates
-    setInterval(() => {
+    this.pollingIntervalId = setInterval(() => {
       this.updateDeviceStatus();
     }, (this.deviceConfig.pollingInterval || 30) * 1000);
   }
 
-  async runPythonScript(scriptName: string, args: string[] = []): Promise<{
-    pwr?: number;
-    mode?: string;
-    om?: number | string;
-    pm25?: number;
-    fltsts0?: number;
-    fltsts1?: number;
-    temp?: number;
-    rh?: number;
-    iaql?: number;
-    error?: string;
-    success?: boolean;
-  }> {
-    return new Promise((resolve, reject) => {
+  async runPythonScript(scriptName: string, args: string[] = [], retryCount: number = 0): Promise<PythonScriptResult> {
+    const maxRetries = this.deviceConfig.maxRetries || 2; // Default 2 retries
+
+    return new Promise<PythonScriptResult>((resolve, reject) => {
       // Use virtual environment Python if specified, otherwise fall back to system python3
       const pythonExecutable = this.deviceConfig.pythonVenvPath || 'python3';
       const pythonCommand = `${pythonExecutable} ${path.join(this.pythonScriptPath, scriptName)}.py`;
       const fullCommand = `${pythonCommand} ${this.deviceConfig.ip} ${this.deviceConfig.protocol || 'coap'} ${args.join(' ')}`;
 
-      this.platform.log.debug(`Executing Python command: ${fullCommand}`);
+      this.platform.log.debug(`Executing Python command: ${fullCommand}${retryCount > 0 ? ` (retry ${retryCount}/${maxRetries})` : ''}`);
 
-      exec(fullCommand, (error: Error | null, stdout: string, stderr: string) => {
+      // Add timeout to prevent hanging
+      const timeoutMs = this.deviceConfig.scriptTimeout || 30000; // Default 30 seconds
+      const timeout = setTimeout(() => {
+        this.platform.log.error(`Python script ${scriptName} timed out after ${timeoutMs / 1000} seconds`);
+        reject(new Error(`Python script ${scriptName} timed out after ${timeoutMs / 1000} seconds`));
+      }, timeoutMs);
+
+      const childProcess = exec(fullCommand, (error: Error | null, stdout: string, stderr: string) => {
+        clearTimeout(timeout); // Clear timeout since we got a response
+
         if (error) {
           this.platform.log.error(`Python script error for ${scriptName}: ${this.getErrorMessage(error)}`);
           this.platform.log.error(`Stderr: ${stderr}`);
@@ -147,7 +166,65 @@ export class PhilipsAirPurifierAccessory {
           reject(new Error(`Failed to parse JSON: ${this.getErrorMessage(parseError)}`));
         }
       });
+
+      // Handle process exit to ensure cleanup
+      childProcess.on('exit', (code) => {
+        clearTimeout(timeout);
+        if (code !== 0) {
+          this.platform.log.error(`Python script ${scriptName} exited with code ${code}`);
+        }
+      });
+
+      // Handle process errors
+      childProcess.on('error', (error) => {
+        clearTimeout(timeout);
+        this.platform.log.error(`Python script ${scriptName} process error: ${this.getErrorMessage(error)}`);
+        reject(new Error(`Python script process error: ${this.getErrorMessage(error)}`));
+      });
+    }).catch(async (error) => {
+      // Retry logic for network-related errors
+      if (retryCount < maxRetries && this.isRetryableError(error)) {
+        this.platform.log.warn(`Retrying ${scriptName} due to retryable error: ${this.getErrorMessage(error)}`);
+        // Wait before retry (exponential backoff)
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 5000); // 1s, 2s, 4s, max 5s
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.runPythonScript(scriptName, args, retryCount + 1);
+      }
+      throw error;
     });
+  }
+
+  /**
+   * Determine if an error is retryable (network-related errors)
+   */
+  private isRetryableError(error: Error): boolean {
+    const errorMessage = this.getErrorMessage(error).toLowerCase();
+    const retryablePatterns = [
+      'give up on message',
+      'timeout',
+      'connection refused',
+      'network is unreachable',
+      'no route to host',
+      'connection reset',
+      'broken pipe',
+      'econnreset',
+      'enetunreach',
+      'econnrefused'
+    ];
+
+    return retryablePatterns.some(pattern => errorMessage.includes(pattern));
+  }
+
+  /**
+   * Re-enable polling if it was disabled due to errors
+   */
+  private reEnablePolling(): void {
+    if (!this.pollingIntervalId && this.deviceConfig.disablePollingOnError) {
+      this.platform.log.info(`Re-enabling polling for ${this.deviceConfig.name}`);
+      this.pollingIntervalId = setInterval(() => {
+        this.updateDeviceStatus();
+      }, (this.deviceConfig.pollingInterval || 30) * 1000);
+    }
   }
 
   async updateDeviceStatus() {
@@ -249,11 +326,56 @@ export class PhilipsAirPurifierAccessory {
         this.humiditySensorService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, status.rh);
       }
 
+      // Reset consecutive error counter on successful communication
+      if (this.consecutiveErrors > 0) {
+        this.platform.log.debug(`Reset consecutive error counter for ${this.deviceConfig.name} after successful communication`);
+        this.consecutiveErrors = 0;
+        // Re-enable polling if it was disabled
+        this.reEnablePolling();
+      }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? this.getErrorMessage(error) : String(error);
       this.platform.log.error(`Failed to update device status for ${this.deviceConfig.name}:`, errorMessage);
-      // Optionally set characteristics to a default or error state
+
+      // Track consecutive errors
+      this.consecutiveErrors++;
+
+      // Check if we should disable polling to prevent spam
+      if (this.deviceConfig.disablePollingOnError && this.consecutiveErrors >= 3 && this.pollingIntervalId) {
+        this.platform.log.warn(`Disabling polling for ${this.deviceConfig.name} after ${this.consecutiveErrors} consecutive errors`);
+        clearInterval(this.pollingIntervalId);
+        this.pollingIntervalId = undefined;
+      }
+
+      // Set characteristics to safe default values on error to prevent Homebridge from hanging
+      // This ensures the plugin remains responsive even when the device is unreachable
+      try {
+        this.service.updateCharacteristic(this.platform.Characteristic.Active, this.platform.Characteristic.Active.INACTIVE);
+        this.service.updateCharacteristic(this.platform.Characteristic.CurrentAirPurifierState, this.platform.Characteristic.CurrentAirPurifierState.INACTIVE);
+        this.service.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 0);
+
+        if (this.fanService) {
+          this.fanService.updateCharacteristic(this.platform.Characteristic.On, false);
+          this.fanService.updateCharacteristic(this.platform.Characteristic.RotationSpeed, 0);
+        }
+
+        // Set filter to OK state to prevent false alerts
+        this.service.updateCharacteristic(this.platform.Characteristic.FilterChangeIndication, this.platform.Characteristic.FilterChangeIndication.FILTER_OK);
+        this.service.updateCharacteristic(this.platform.Characteristic.FilterLifeLevel, 100);
+
+        // Set default sensor values
+        if (this.temperatureSensorService) {
+          this.temperatureSensorService.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, 20);
+        }
+        if (this.humiditySensorService) {
+          this.humiditySensorService.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, 50);
+        }
+
+        this.platform.log.debug(`Set safe default values for ${this.deviceConfig.name} due to communication error`);
+      } catch (updateError) {
+        this.platform.log.error(`Failed to set safe default values for ${this.deviceConfig.name}:`, this.getErrorMessage(updateError));
+      }
     }
   }
 
@@ -285,7 +407,7 @@ export class PhilipsAirPurifierAccessory {
       return isActive;
     } catch (error) {
       this.platform.log.error(`Failed to get Active for ${this.deviceConfig.name}:`, this.getErrorMessage(error));
-      // Return inactive state on error
+      // Return inactive state on error or timeout to prevent Homebridge from hanging
       return this.platform.Characteristic.Active.INACTIVE;
     }
   }

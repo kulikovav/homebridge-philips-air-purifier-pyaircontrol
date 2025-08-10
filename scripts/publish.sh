@@ -244,10 +244,10 @@ bump_version() {
         # Standard bump - completely suppress output and disable colors
         npm version "$version_type" --no-git-tag-version --no-color --silent > /dev/null 2>&1
     fi
-    
+
     # Always get the version from package.json directly to avoid any npm output issues
     new_version=$(node -p "require('$PACKAGE_JSON').version")
-    
+
     # Ensure we have a clean version
     if [[ ! "$new_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         log_error "Invalid version format: $new_version" >&2
@@ -255,7 +255,7 @@ bump_version() {
     fi
 
     log_success "Version bumped to: $new_version" >&2
-    
+
     # Only output the clean version number to stdout
     echo "$new_version"
 }

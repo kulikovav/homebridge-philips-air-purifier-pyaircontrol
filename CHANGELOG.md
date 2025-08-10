@@ -5,23 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [[0;34m[INFO][0m Bumping version...
-[0;32m[SUCCESS][0m Version bumped to: 1.0.2
-1.0.2] - 2025-08-10
-
-## [0340...03201.0.31.0.3] - 2025-08-10
-
-## [[0;34m[INFO][0m Bumping version...
-[0;32m[SUCCESS][0m Version bumped to: 1.0.4
-1.0.4] - 2025-08-10
-
-## [[0;34m[INFO][0m Bumping version...
-[0;32m[SUCCESS][0m Version bumped to: 1.0.6
-1.0.6] - 2025-08-10
-
-## [1.0.7] - 2025-08-10
-
 ## [1.0.8] - 2025-08-10
+
+### Fixed
+- **Critical Bug Fix**: Fixed Python script API compatibility with py-air-control v1.0.0+
+- Updated class names: `CoAPClient` → `CoAPAirClient`, `HTTPClient` → `HTTPAirClient`
+- Updated method names: `set_value` → `set_values` (plural)
+- Resolves error: "module 'pyairctrl.coap_client' has no attribute 'CoAPClient'"
+- Plugin now works with current versions of py-air-control library
+
+### Added
+- **Performance & Reliability Improvements**: Added comprehensive timeout and retry mechanisms
+- Script execution timeout (configurable, default 30 seconds) to prevent Homebridge hanging
+- Automatic retry logic for network-related errors with exponential backoff
+- Configurable retry count (default 2 retries)
+- Safe fallback values for all characteristics when device is unreachable
+- Optional polling disable after consecutive errors to prevent spam
+- Automatic polling re-enable when communication is restored
+- Enhanced error handling for CoAP communication failures like "Give up on message"
 
 ## [Unreleased]
 
