@@ -233,20 +233,30 @@ bump_version() {
     local version_type=$1
     local new_version
 
-    log_info "Bumping version..."
+    # Log to stderr so it doesn't interfere with stdout output
+    log_info "Bumping version..." >&2
 
     if [[ "$version_type" == "custom:"* ]]; then
         # Custom version
         new_version=${version_type#custom:}
-        npm version "$new_version" --no-git-tag-version
+        npm version "$new_version" --no-git-tag-version --no-color --silent > /dev/null 2>&1
     else
-        # Standard bump
-        new_version=$(npm version "$version_type" --no-git-tag-version)
-        # Remove the 'v' prefix and any extra output
-        new_version=$(echo "$new_version" | sed 's/^v//' | tr -d '\n\r')
+        # Standard bump - completely suppress output and disable colors
+        npm version "$version_type" --no-git-tag-version --no-color --silent > /dev/null 2>&1
+    fi
+    
+    # Always get the version from package.json directly to avoid any npm output issues
+    new_version=$(node -p "require('$PACKAGE_JSON').version")
+    
+    # Ensure we have a clean version
+    if [[ ! "$new_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        log_error "Invalid version format: $new_version" >&2
+        exit 1
     fi
 
-    log_success "Version bumped to: $new_version"
+    log_success "Version bumped to: $new_version" >&2
+    
+    # Only output the clean version number to stdout
     echo "$new_version"
 }
 
@@ -324,7 +334,7 @@ publish_to_npm() {
 
     # Check package contents
     log_info "Checking package contents..."
-    npm pack --dry-run
+    npm pack --dry-run --no-color
 
     # Confirm publishing
     echo
@@ -336,7 +346,7 @@ publish_to_npm() {
     fi
 
     # Publish
-    if npm publish; then
+    if npm publish --no-color; then
         log_success "Successfully published $new_version to npm!"
     else
         log_error "Failed to publish to npm"
@@ -432,7 +442,7 @@ main() {
     fi
 
     # Bump version
-    new_version=$(bump_version "$version_choice")
+    local new_version=$(bump_version "$version_choice")
 
     # Update changelog
     update_changelog "$new_version"

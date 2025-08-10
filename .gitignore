@@ -12,7 +12,6 @@ yarn-error.log*
 .npm
 .yarn-integrity
 .yarnrc
-package-lock.json
 yarn.lock
 
 # Build output
