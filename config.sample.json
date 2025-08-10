@@ -1,0 +1,31 @@
+{
+  "platforms": [
+    {
+      "platform": "PhilipsAirPurifierPyAirControl",
+      "devices": [
+        {
+          "name": "Living Room Air Purifier",
+          "ip": "192.168.1.100",
+          "protocol": "coaps",
+          "pollingInterval": 15,
+          "useEnhancedPolling": true,
+          "pythonVenvPath": "/path/to/your/plugin/python_venv/bin/python",
+          "scriptTimeout": 30000,
+          "maxRetries": 3,
+          "disablePollingOnError": false
+        },
+        {
+          "name": "Bedroom Air Purifier",
+          "ip": "192.168.1.101",
+          "protocol": "coaps",
+          "pollingInterval": 20,
+          "useEnhancedPolling": true,
+          "pythonVenvPath": "/path/to/your/plugin/python_venv/bin/python",
+          "scriptTimeout": 30000,
+          "maxRetries": 2,
+          "disablePollingOnError": true
+        }
+      ]
+    }
+  ]
+}

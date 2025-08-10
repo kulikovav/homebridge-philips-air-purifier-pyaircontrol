@@ -60,6 +60,12 @@
               "required": false,
               "default": false,
               "description": "Disable polling when device is unreachable after 3 consecutive errors"
+            },
+            "useEnhancedPolling": {
+              "type": "boolean",
+              "required": false,
+              "default": true,
+              "description": "Use enhanced polling manager for better reliability and performance (recommended)"
             }
           },
           "required": ["name", "ip", "protocol"]

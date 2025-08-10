@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  aioairctrl-test:
+    build: .
+    container_name: aioairctrl-test
+    network_mode: host  # Use host network to access local network devices
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ./:/app
+    command: python3 test_simple.py 192.168.88.150 coaps
+    restart: "no"

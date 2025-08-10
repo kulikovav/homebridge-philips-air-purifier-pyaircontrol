@@ -2,6 +2,7 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings';
 import { PhilipsAirPurifierAccessory } from './philipsAirPurifierAccessory';
+import { PhilipsAirPurifierAccessoryEnhanced } from './philipsAirPurifierAccessoryEnhanced';
 
 /**
  * HomebridgePlatform
@@ -69,7 +70,13 @@ export class PhilipsAirPurifierPlatform implements DynamicPlatformPlugin {
           // application data and re-register the accessory here.
           // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
           // this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-          new PhilipsAirPurifierAccessory(this, existingAccessory, deviceConfig);
+
+          // use enhanced version if enabled, otherwise fall back to original
+          if (deviceConfig.useEnhancedPolling !== false) { // Default to true
+            new PhilipsAirPurifierAccessoryEnhanced(this, existingAccessory, deviceConfig);
+          } else {
+            new PhilipsAirPurifierAccessory(this, existingAccessory, deviceConfig);
+          }
 
           // update accessory cache with any changes to the device details
           this.api.updatePlatformAccessories([existingAccessory]);
@@ -87,8 +94,12 @@ export class PhilipsAirPurifierPlatform implements DynamicPlatformPlugin {
         accessory.context.device = deviceConfig;
 
         // create the accessory handler for the newly create accessory
-        // this is imported from `platformAccessory.ts`
-        new PhilipsAirPurifierAccessory(this, accessory, deviceConfig);
+        // use enhanced version if enabled, otherwise fall back to original
+        if (deviceConfig.useEnhancedPolling !== false) { // Default to true
+          new PhilipsAirPurifierAccessoryEnhanced(this, accessory, deviceConfig);
+        } else {
+          new PhilipsAirPurifierAccessory(this, accessory, deviceConfig);
+        }
 
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);

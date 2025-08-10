@@ -36,6 +36,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.10] - 2025-08-10
 
+## [1.1.0] - 2025-08-10
+
+### Added
+- **Enhanced Polling System**: New intelligent polling manager for improved reliability and performance
+- **DevicePollingManager**: Python-based device management with automatic reconnection and error recovery
+- **Smart Status Caching**: Efficient device status caching to reduce network traffic
+- **Automatic Error Recovery**: Built-in retry mechanisms and connection management
+- **Plugin Polling Interface**: Clean interface between Node.js plugin and Python polling manager
+- **Backward Compatibility**: Option to use original polling method if needed
+
+### Changed
+- **Default Behavior**: Enhanced polling is now enabled by default for all new installations
+- **Configuration**: Added `useEnhancedPolling` option to device configuration
+- **Performance**: Improved device response times and reduced network overhead
+- **Reliability**: Better handling of network interruptions and device disconnections
+
+### Enhanced Features
+- **Intelligent Polling**: Devices are only polled when necessary, reducing unnecessary network traffic
+- **Connection Management**: Automatic device discovery and connection management
+- **Error Handling**: Comprehensive error handling with automatic recovery
+- **Status Monitoring**: Real-time device status monitoring with configurable intervals
+
 ## [Unreleased]
 
 ### Added

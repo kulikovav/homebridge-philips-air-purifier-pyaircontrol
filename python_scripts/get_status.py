@@ -7,9 +7,11 @@ from aioairctrl import CoAPClient
 
 async def get_client(ip, protocol):
     if protocol in ["coap", "coaps"]:
-        # aioairctrl only supports CoAP, coaps is handled by encryption
-        use_encryption = (protocol == "coaps")
-        return CoAPClient(ip, use_encryption=use_encryption)
+        # aioairctrl handles encryption automatically
+        client = CoAPClient(ip)
+        # Initialize the client
+        await client.create()
+        return client
     else:
         raise ValueError(f"Unsupported protocol: {protocol}. aioairctrl only supports CoAP/CoAPS")
 

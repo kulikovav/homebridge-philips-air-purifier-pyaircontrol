@@ -76,6 +76,7 @@ During installation, the plugin automatically:
 | `protocol` | string | ❌ | `coaps` | Communication protocol: `coap`, `coaps`, or `http` |
 | `pollingInterval` | number | ❌ | `10` | Status update interval in seconds (minimum 5) |
 | `pythonVenvPath` | string | ❌ | - | Full path to Python executable in virtual environment (recommended) |
+| `useEnhancedPolling` | boolean | ❌ | `true` | Use enhanced polling manager for better reliability (recommended) |
 
 ### Protocol Options
 
@@ -83,6 +84,19 @@ During installation, the plugin automatically:
 - **`coap`**: Unencrypted CoAP protocol
 
 **Note**: HTTP protocol is not supported with the aioairctrl library.
+
+### Enhanced Polling (Recommended)
+
+The plugin includes an enhanced polling system that provides:
+
+- **Better Reliability**: Automatic reconnection and error handling
+- **Improved Performance**: Efficient device status caching
+- **Reduced Network Traffic**: Smart polling that only updates when needed
+- **Better Error Recovery**: Automatic retry mechanisms for failed connections
+
+**Enable Enhanced Polling**: Set `useEnhancedPolling: true` in your device configuration (enabled by default).
+
+**Fallback Mode**: If you experience issues with enhanced polling, you can disable it by setting `useEnhancedPolling: false` to use the original polling method.
 
 ### Virtual Environment Configuration
 
