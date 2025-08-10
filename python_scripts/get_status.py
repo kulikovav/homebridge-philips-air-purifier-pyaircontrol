@@ -3,17 +3,15 @@
 import sys
 import json
 import asyncio
-from aioairctrl import CoAPAirClient, HTTPAirClient
+from aioairctrl import CoAPClient
 
 async def get_client(ip, protocol):
-    if protocol == "coap":
-        return CoAPAirClient(ip)
-    elif protocol == "coaps":
-        return CoAPAirClient(ip, use_encryption=True)  # encrypted CoAP
-    elif protocol == "http":
-        return HTTPAirClient(ip)
+    if protocol in ["coap", "coaps"]:
+        # aioairctrl only supports CoAP, coaps is handled by encryption
+        use_encryption = (protocol == "coaps")
+        return CoAPClient(ip, use_encryption=use_encryption)
     else:
-        raise ValueError(f"Unsupported protocol: {protocol}")
+        raise ValueError(f"Unsupported protocol: {protocol}. aioairctrl only supports CoAP/CoAPS")
 
 async def main():
     if len(sys.argv) < 3:

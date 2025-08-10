@@ -20,13 +20,13 @@
               "required": true,
               "description": "IP address of the Philips Air Purifier"
             },
-            "protocol": {
-              "type": "string",
-              "required": true,
-              "enum": ["coap", "coaps", "http"],
-              "default": "coaps",
-              "description": "Communication protocol (coap, coaps, or http)"
-            },
+                                    "protocol": {
+                          "type": "string",
+                          "required": true,
+                          "enum": ["coap", "coaps"],
+                          "default": "coaps",
+                          "description": "Communication protocol (coap or coaps). Note: HTTP is not supported with aioairctrl."
+                        },
             "pollingInterval": {
               "type": "number",
               "required": false,

@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Python scripts to use async/await syntax for improved reliability
 - Enhanced CoAP client initialization with proper encryption support
 - Better error handling and resource management in Python scripts
+- **Protocol Support**: Removed HTTP protocol support (aioairctrl only supports CoAP/CoAPS)
+- **Dependencies**: Removed `requests` dependency (no longer needed for HTTP support)
 
 ### Added
 - **Performance & Reliability Improvements**: Added comprehensive timeout and retry mechanisms

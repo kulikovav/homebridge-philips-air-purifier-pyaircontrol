@@ -81,7 +81,8 @@ During installation, the plugin automatically:
 
 - **`coaps`** (default): Encrypted CoAP protocol - recommended for most devices
 - **`coap`**: Unencrypted CoAP protocol
-- **`http`**: HTTP protocol (if supported by your device)
+
+**Note**: HTTP protocol is not supported with the aioairctrl library.
 
 ### Virtual Environment Configuration
 
