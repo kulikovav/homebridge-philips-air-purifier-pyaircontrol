@@ -6,11 +6,11 @@ from pyairctrl import coap_client, http_client
 
 def get_client(ip, protocol):
     if protocol == "coap":
-        return coap_client.CoAPClient(ip)
+        return coap_client.CoAPAirClient(ip)
     elif protocol == "coaps":
-        return coap_client.CoAPClient(ip, True) # encrypted CoAP
+        return coap_client.CoAPAirClient(ip, True) # encrypted CoAP
     elif protocol == "http":
-        return http_client.HTTPClient(ip)
+        return http_client.HTTPAirClient(ip)
     else:
         raise ValueError(f"Unsupported protocol: {protocol}")
 
