@@ -2,6 +2,7 @@ import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { PhilipsAirPurifierPlatform } from './philipsAirPurifierPlatform';
 import { exec } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 
 interface DeviceConfig {
   name: string;
@@ -87,7 +88,16 @@ export class PhilipsAirPurifierAccessory {
       .onGet(this.getCurrentHumidity.bind(this));
 
 
-    this.pythonScriptPath = path.join(process.cwd(), 'python_scripts');
+    // Get the plugin directory path - this is more reliable than process.cwd()
+    const pluginDir = path.dirname(require.main?.filename || __dirname);
+    this.pythonScriptPath = path.join(pluginDir, 'python_scripts');
+
+    // Fallback: if the above doesn't work, try to find the scripts relative to the current file
+    if (!fs.existsSync(this.pythonScriptPath)) {
+      this.pythonScriptPath = path.join(__dirname, '..', 'python_scripts');
+    }
+
+    this.platform.log.debug(`Python scripts path: ${this.pythonScriptPath}`);
 
     // Poll for status updates
     setInterval(() => {

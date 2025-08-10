@@ -126,3 +126,7 @@ homebridge.log*
 *.tar.gz
 publish-*.log
 npm-debug.log*
+
+# Backup files from scripts
+*.md.backup.*
+*.backup.*

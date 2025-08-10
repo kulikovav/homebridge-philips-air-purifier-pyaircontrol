@@ -38,33 +38,33 @@ log_error() {
 # Check if we're in the right directory
 check_project_structure() {
     log_info "Checking project structure..."
-    
+
     if [[ ! -f "$PACKAGE_JSON" ]]; then
         log_error "package.json not found in $PROJECT_ROOT"
         exit 1
     fi
-    
+
     if [[ ! -f "$CHANGELOG" ]]; then
         log_warning "CHANGELOG.md not found - this is recommended for releases"
     fi
-    
+
     log_success "Project structure verified"
 }
 
 # Check if git is available and we're in a git repo
 check_git_status() {
     log_info "Checking git status..."
-    
+
     if ! command -v git &> /dev/null; then
         log_error "git is not installed or not in PATH"
         exit 1
     fi
-    
+
     if [[ ! -d ".git" ]]; then
         log_error "Not in a git repository"
         exit 1
     fi
-    
+
     # Check if there are uncommitted changes
     if [[ -n "$(git status --porcelain)" ]]; then
         log_warning "There are uncommitted changes:"
@@ -77,7 +77,7 @@ check_git_status() {
             exit 0
         fi
     fi
-    
+
     # Check if we're on main/master branch
     CURRENT_BRANCH=$(git branch --show-current)
     if [[ "$CURRENT_BRANCH" != "main" && "$CURRENT_BRANCH" != "master" ]]; then
@@ -89,29 +89,29 @@ check_git_status() {
             exit 0
         fi
     fi
-    
+
     log_success "Git status verified"
 }
 
 # Check npm authentication
 check_npm_auth() {
     log_info "Checking npm authentication..."
-    
+
     if ! command -v npm &> /dev/null; then
         log_error "npm is not installed or not in PATH"
         exit 1
     fi
-    
+
     # Check if user is logged in
     if ! npm whoami &> /dev/null; then
         log_error "Not logged in to npm. Please run 'npm login' first"
         exit 1
     fi
-    
+
     # Get current user
     NPM_USER=$(npm whoami)
     log_info "Logged in as: $NPM_USER"
-    
+
     # Check package ownership
     PACKAGE_NAME=$(node -p "require('$PACKAGE_JSON').name")
     if npm owner ls "$PACKAGE_NAME" 2>/dev/null | grep -q "$NPM_USER"; then
@@ -140,36 +140,36 @@ get_package_name() {
 # Run pre-publishing checks
 run_prepublish_checks() {
     log_info "Running pre-publishing checks..."
-    
+
     # Change to project directory
     cd "$PROJECT_ROOT"
-    
+
     # Install dependencies if needed
     if [[ ! -d "node_modules" ]]; then
         log_info "Installing dependencies..."
         npm ci
     fi
-    
+
     # Run linting
     log_info "Running ESLint..."
     if ! npm run lint; then
         log_error "ESLint failed. Please fix the issues before publishing"
         exit 1
     fi
-    
+
     # Build the project
     log_info "Building project..."
     if ! npm run build; then
         log_error "Build failed. Please fix the issues before publishing"
         exit 1
     fi
-    
+
     # Verify build output
     if [[ ! -d "dist" ]] || [[ -z "$(ls -A dist)" ]]; then
         log_error "Build output directory is empty or missing"
         exit 1
     fi
-    
+
     log_success "Pre-publishing checks passed"
 }
 
@@ -177,7 +177,7 @@ run_prepublish_checks() {
 show_version_options() {
     CURRENT_VERSION=$(get_current_version)
     PACKAGE_NAME=$(get_package_name)
-    
+
     echo
     log_info "Current version: $CURRENT_VERSION"
     log_info "Package: $PACKAGE_NAME"
@@ -232,9 +232,9 @@ get_version_bump() {
 bump_version() {
     local version_type=$1
     local new_version
-    
+
     log_info "Bumping version..."
-    
+
     if [[ "$version_type" == "custom:"* ]]; then
         # Custom version
         new_version=${version_type#custom:}
@@ -242,10 +242,10 @@ bump_version() {
     else
         # Standard bump
         new_version=$(npm version "$version_type" --no-git-tag-version)
-        # Remove the 'v' prefix
-        new_version=${new_version#v}
+        # Remove the 'v' prefix and any extra output
+        new_version=$(echo "$new_version" | sed 's/^v//' | tr -d '\n\r')
     fi
-    
+
     log_success "Version bumped to: $new_version"
     echo "$new_version"
 }
@@ -254,24 +254,45 @@ bump_version() {
 update_changelog() {
     local new_version=$1
     local current_date=$(date +%Y-%m-%d)
-    
+
     log_info "Updating changelog..."
-    
+
     if [[ -f "$CHANGELOG" ]]; then
         # Create backup
         cp "$CHANGELOG" "$CHANGELOG.backup.$(date +%s)"
-        
+
         # Update changelog
         if [[ -f "$CHANGELOG" ]]; then
-            # Replace [Unreleased] with the new version
-            sed -i.bak "s/## \[Unreleased\]/## \[$new_version\] - $current_date\n\n## [Unreleased]/" "$CHANGELOG"
-            
-            # Update version history
-            sed -i.bak "s/- \*\*Future versions\*\*: Will be documented here as they are released/- \*\*$new_version\*\*: $(get_version_description $new_version)\n- \*\*Future versions\*\*: Will be documented here as they are released/" "$CHANGELOG"
-            
+            # Create a temporary file for the new content
+            local temp_file=$(mktemp)
+
+            # Process the changelog line by line
+            local in_unreleased=false
+            local version_added=false
+
+            while IFS= read -r line; do
+                if [[ "$line" == "## [Unreleased]" ]]; then
+                    # Replace [Unreleased] with the new version
+                    echo "## [$new_version] - $current_date" >> "$temp_file"
+                    echo "" >> "$temp_file"
+                    echo "## [Unreleased]" >> "$temp_file"
+                    in_unreleased=true
+                    version_added=true
+                elif [[ "$line" == "- \*\*Future versions\*\*: Will be documented here as they are released" && "$version_added" == "true" ]]; then
+                    # Update version history
+                    echo "- **$new_version**: $(get_version_description $new_version)" >> "$temp_file"
+                    echo "$line" >> "$temp_file"
+                else
+                    echo "$line" >> "$temp_file"
+                fi
+            done < "$CHANGELOG"
+
+            # Replace the original file
+            mv "$temp_file" "$CHANGELOG"
+
             # Clean up backup files
             rm -f "$CHANGELOG.bak"
-            
+
             log_success "Changelog updated"
         fi
     else
@@ -285,7 +306,7 @@ get_version_description() {
     local major=$(echo "$version" | cut -d. -f1)
     local minor=$(echo "$version" | cut -d. -f2)
     local patch=$(echo "$version" | cut -d. -f3)
-    
+
     if [[ "$patch" != "0" ]]; then
         echo "Patch release with bug fixes"
     elif [[ "$minor" != "0" ]]; then
@@ -298,13 +319,13 @@ get_version_description() {
 # Publish to npm
 publish_to_npm() {
     local new_version=$1
-    
+
     log_info "Publishing to npm..."
-    
+
     # Check package contents
     log_info "Checking package contents..."
     npm pack --dry-run
-    
+
     # Confirm publishing
     echo
     read -p "Ready to publish version $new_version to npm? (y/N): " -n 1 -r
@@ -313,7 +334,7 @@ publish_to_npm() {
         log_info "Publishing cancelled"
         exit 0
     fi
-    
+
     # Publish
     if npm publish; then
         log_success "Successfully published $new_version to npm!"
@@ -326,9 +347,9 @@ publish_to_npm() {
 # Create git tag and push
 create_git_tag() {
     local new_version=$1
-    
+
     log_info "Creating git tag..."
-    
+
     # Create tag
     if git tag -a "v$new_version" -m "Release version $new_version"; then
         log_success "Git tag v$new_version created"
@@ -336,7 +357,7 @@ create_git_tag() {
         log_error "Failed to create git tag"
         exit 1
     fi
-    
+
     # Push tag
     log_info "Pushing tag to remote..."
     if git push origin "v$new_version"; then
@@ -344,17 +365,17 @@ create_git_tag() {
     else
         log_warning "Failed to push tag to remote"
     fi
-    
+
     # Commit version changes
     log_info "Committing version changes..."
     git add package.json package-lock.json
     if [[ -f "$CHANGELOG" ]]; then
         git add "$CHANGELOG"
     fi
-    
+
     if git commit -m "Bump version to $new_version"; then
         log_success "Version changes committed"
-        
+
         # Push changes
         log_info "Pushing changes to remote..."
         if git push origin "$(git branch --show-current)"; then
@@ -371,7 +392,7 @@ create_git_tag() {
 show_post_publish_info() {
     local new_version=$1
     local package_name=$(get_package_name)
-    
+
     echo
     log_success "🎉 Release $new_version published successfully!"
     echo
@@ -392,36 +413,36 @@ main() {
     echo -e "${BLUE}  Homebridge Plugin Publishing Script${NC}"
     echo -e "${BLUE}========================================${NC}"
     echo
-    
+
     # Run checks
     check_project_structure
     check_git_status
     check_npm_auth
     run_prepublish_checks
-    
+
     # Show version options
     show_version_options
-    
+
     # Get version bump choice
     version_choice=$(get_version_bump)
-    
+
     if [[ "$version_choice" == "cancel" ]]; then
         log_info "Publishing cancelled"
         exit 0
     fi
-    
+
     # Bump version
     new_version=$(bump_version "$version_choice")
-    
+
     # Update changelog
     update_changelog "$new_version"
-    
+
     # Publish to npm
     publish_to_npm "$new_version"
-    
+
     # Create git tag and push
     create_git_tag "$new_version"
-    
+
     # Show post-publishing information
     show_post_publish_info "$new_version"
 }
