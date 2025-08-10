@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic polling re-enable when communication is restored
 - Enhanced error handling for CoAP communication failures like "Give up on message"
 
+## [1.0.9] - 2025-08-10
+
 ## [Unreleased]
 
 ### Added
