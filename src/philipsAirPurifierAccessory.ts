@@ -38,7 +38,7 @@ export class PhilipsAirPurifierAccessory {
 
   private pythonScriptPath: string;
   private consecutiveErrors: number = 0;
-  private pollingIntervalId?: NodeJS.Timeout;
+  private pollingIntervalId?: ReturnType<typeof setInterval>;
 
   private getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
